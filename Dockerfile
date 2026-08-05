@@ -22,7 +22,8 @@ RUN mkdir -p /var/log/xray \
     /var/log/supervisor \
     /app/data \
     /app/configs \
-    /etc/xray
+    /etc/xray \
+    /etc/supervisor/conf.d
 
 # تنظیم پایتون
 WORKDIR /app
@@ -31,6 +32,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # کپی فایل‌ها
 COPY . .
+
+# کپی supervisor.conf به مسیر درست
+RUN cp /app/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
 # پورت‌ها
 EXPOSE 8000 12889 8443
