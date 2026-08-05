@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EdgeX Panel - Admin</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛡️ Admin Panel</h1>
+            <p class="subtitle">System Administration</p>
+            <a href="/" style="color: var(--primary); text-decoration: none;">← Back to Dashboard</a>
+        </div>
+
+        <div class="control-panel">
+            <h2>System Controls</h2>
+            
+            <button class="btn btn-success" onclick="restartXray()">
+                🔄 Restart Xray
+            </button>
+            
+            <button class="btn btn-danger" onclick="stopXray()" style="margin-left: 10px;">
+                ⏹️ Stop Xray
+            </button>
+            
+            <button class="btn btn-primary" onclick="viewLogs()" style="margin-left: 10px;">
+                📋 View Logs
+            </button>
+        </div>
+
+        <div class="control-panel">
+            <h2>UUID Management</h2>
+            <p>Active UUID: <code id="admin-uuid">Loading...</code></p>
+            <button class="btn btn-warning" onclick="regenerateUUID()">
+                🔄 Regenerate UUID
+            </button>
+        </div>
+
+        <div id="admin-log" class="log-section" style="margin-top: 20px;">
+            System logs will appear here...
+        </div>
+    </div>
+
+    <script>
+        async function restartXray() {
+            const response = await fetch('/api/admin/xray/restart', { method: 'POST' });
+            const data = await response.json();
+            alert(data.message || 'Xray restarted');
+        }
+
+        async function stopXray() {
+            if (confirm('Are you sure you want to stop Xray?')) {
+                const response = await fetch('/api/admin/xray/stop', { method: 'POST' });
+                const data = await response.json();
+                alert(data.message || 'Xray stopped');
+            }
+        }
+
+        async function regenerateUUID() {
+            const response = await fetch('/api/admin/uuid/regenerate', { method: 'POST' });
+            const data = await response.json();
+            document.getElementById('admin-uuid').textContent = data.uuid;
+            alert('UUID regenerated!');
+        }
+
+        async function viewLogs() {
+            const response = await fetch('/api/logs');
+            const data = await response.json();
+            const logDiv = document.getElementById('admin-log');
+            logDiv.innerHTML = data.logs.join('<br>') || 'No logs available';
+        }
+
+        // Load initial UUID
+        fetch('/api/status')
+            .then(r => r.json())
+            .then(d => {
+                document.getElementById('admin-uuid').textContent = d.uuid || 'Unknown';
+            });
+    </script>
+</body>
+</html>
