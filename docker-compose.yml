@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  edgex-panel:
+    build: .
+    ports:
+      - "${RAILWAY_TCP_PORT:-12889}:12889"  # پورت Xray (TCP Proxy)
+    environment:
+      - PANEL_PORT=8000
+      - XRAY_PORT=12889
+      - ADMIN_USER=admin
+      - ADMIN_PASS=${ADMIN_PASS:-changeme}
+      - DOMAIN=${RAILWAY_PUBLIC_DOMAIN}
+    volumes:
+      - ./data:/app/data
+      - ./configs:/etc/xray
+    restart: always
+    networks:
+      - edgex_net
+
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "8443:8443"
+      - "8000:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - edgex-panel
+    networks:
+      - edgex_net
+
+networks:
+  edgex_net:
+    driver: bridge
