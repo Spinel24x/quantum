@@ -3,8 +3,8 @@ set -e
 
 echo "🚀 Starting EdgeX Panel..."
 
-# ساخت دایرکتوری‌ها
-mkdir -p /app/data /app/configs /etc/xray
+# اطمینان از وجود دایرکتوری‌ها (اینبار توی runtime)
+mkdir -p /app/data /app/configs /etc/xray /var/log/xray /var/log/nginx /var/log/panel
 
 # تولید UUID پیش‌فرض اگر وجود نداشته باشه
 if [ ! -f /app/data/uuid.txt ]; then
@@ -12,13 +12,40 @@ if [ ! -f /app/data/uuid.txt ]; then
     echo "✅ Default UUID generated"
 fi
 
-# تنظیم Xray
-python3 /app/panel/xray_manager.py --init
+# کپی کانفیگ اولیه Xray اگر وجود نداشته باشه
+if [ ! -f /etc/xray/config.json ]; then
+    echo "Creating initial Xray config..."
+    cat > /etc/xray/config.json << 'EOF'
+{
+    "log": {
+        "loglevel": "warning"
+    },
+    "inbounds": [{
+        "port": 12889,
+        "listen": "0.0.0.0",
+        "protocol": "vless",
+        "settings": {
+            "clients": [{
+                "id": "00000000-0000-0000-0000-000000000000",
+                "level": 0
+            }],
+            "decryption": "none"
+        },
+        "streamSettings": {
+            "network": "ws",
+            "wsSettings": {
+                "path": "/ws"
+            }
+        }
+    }],
+    "outbounds": [{
+        "protocol": "freedom",
+        "tag": "direct"
+    }]
+}
+EOF
+    echo "✅ Initial Xray config created"
+fi
 
-# استارت Xray در بکگراند
-/opt/xray/xray run -config /etc/xray/config.json &
-echo "✅ Xray started on port ${XRAY_PORT:-12889}"
-
-# استارت پنل
-cd /app/panel
-python3 -m uvicorn app:app --host 0.0.0.0 --port ${PANEL_PORT:-8000}
+# استارت سرویس‌ها با Supervisor
+exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf
