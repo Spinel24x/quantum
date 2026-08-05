@@ -50,6 +50,5 @@ echo "✅ Xray config created"
 /opt/xray/xray run -config /etc/xray/config.json &
 echo "✅ Xray started (PID: $!)"
 
-# استارت پنل
-cd /app/panel
+# استارت پنل (همه فایل‌ها توی /app هستن)
 exec python3 -m uvicorn app:app --host 0.0.0.0 --port 8000
