@@ -3,70 +3,54 @@ set -e
 
 echo "🚀 Starting EdgeX Panel..."
 
-# ساخت دایرکتوری‌های ضروری
-mkdir -p /app/data /app/static /app/templates /etc/xray /var/log/xray
+mkdir -p /app/data /etc/xray /var/log/xray /var/log/nginx
 
-# تولید UUID اگر وجود نداشته باشه
+# UUID
 if [ ! -f /app/data/uuid.txt ]; then
     python3 -c "import uuid; print(str(uuid.uuid4()))" > /app/data/uuid.txt
-    echo "✅ Default UUID generated"
 fi
 
-# خوندن UUID
 UUID=$(cat /app/data/uuid.txt)
 
-# ساخت کانفیگ Xray
+# ============================================
+# Xray با VLESS + TCP خام (بدون WebSocket)
+# ============================================
 cat > /etc/xray/config.json << EOF
 {
-    "log": {
-        "loglevel": "warning",
-        "access": "/var/log/xray/access.log",
-        "error": "/var/log/xray/error.log"
-    },
+    "log": {"loglevel": "warning"},
     "inbounds": [{
         "port": 12889,
-        "listen": "0.0.0.0",
+        "listen": "127.0.0.1",
         "protocol": "vless",
         "settings": {
-            "clients": [{
-                "id": "$UUID",
-                "level": 0,
-                "email": "default@edgex.panel"
-            }],
+            "clients": [{"id": "$UUID", "level": 0}],
             "decryption": "none"
         },
         "streamSettings": {
-            "network": "ws",
-            "wsSettings": {
-                "path": "/ws"
-            }
-        },
-        "sniffing": {
-            "enabled": true,
-            "destOverride": ["http", "tls"]
+            "network": "tcp"
         }
     }],
-    "outbounds": [{
-        "protocol": "freedom",
-        "tag": "direct"
-    }],
-    "routing": {
-        "domainStrategy": "AsIs",
-        "rules": []
-    }
+    "outbounds": [{"protocol": "freedom"}]
 }
 EOF
 
 echo "✅ Xray config created"
 
-# استارت Xray در بکگراند
+# استارت Xray
 /opt/xray/xray run -config /etc/xray/config.json &
-echo "✅ Xray started (PID: $!)"
+echo "✅ Xray started on 127.0.0.1:12889"
 
-# گرفتن پورت از Railway (پیش‌فرض 8000)
-PORT=${PORT:-8000}
-echo "🌐 Starting Panel on port $PORT"
+# ============================================
+# کپی nginx.conf به مسیر درست
+# ============================================
+cp /app/nginx.conf /etc/nginx/nginx.conf
 
+# استارت Nginx (TCP Stream Proxy)
+nginx -g "daemon off;" &
+echo "✅ Nginx TCP→WebSocket proxy started on 0.0.0.0:8080"
+
+# ============================================
 # استارت پنل
+# ============================================
 cd /app
-exec python3 -m uvicorn app:app --host 0.0.0.0 --port $PORT
+exec python3 -m uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000}
