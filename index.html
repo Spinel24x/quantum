@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EdgeX Panel - Xray Management</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>⚡ EdgeX Panel</h1>
+            <p class="subtitle">Professional Xray Configuration Manager</p>
+        </div>
+
+        <!-- Status Grid -->
+        <div class="status-grid">
+            <div class="status-card">
+                <div class="icon">🟢</div>
+                <div class="label">Xray Status</div>
+                <div class="value" id="xray-status">Checking...</div>
+            </div>
+            <div class="status-card">
+                <div class="icon">⏱️</div>
+                <div class="label">Uptime</div>
+                <div class="value" id="uptime">--</div>
+            </div>
+            <div class="status-card">
+                <div class="icon">🔗</div>
+                <div class="label">Active Connections</div>
+                <div class="value" id="active-connections">0</div>
+            </div>
+            <div class="status-card">
+                <div class="icon">🔑</div>
+                <div class="label">Current UUID</div>
+                <div class="value" id="current-uuid" style="font-size: 0.8em;">Loading...</div>
+            </div>
+        </div>
+
+        <!-- Control Panel -->
+        <div class="control-panel">
+            <h2>⚙️ Configuration Generator</h2>
+            
+            <div class="form-group">
+                <label for="sni-input">SNI (Server Name Indication):</label>
+                <input type="text" id="sni-input" class="auto-save" 
+                       value="cloudflare.com" placeholder="e.g., cloudflare.com">
+            </div>
+
+            <div class="form-group">
+                <label for="host-input">Host (Clean IP / Domain):</label>
+                <input type="text" id="host-input" class="auto-save" 
+                       value="speed.cloudflare.com" placeholder="e.g., 1.1.1.1 or speed.cloudflare.com">
+            </div>
+
+            <div class="form-group">
+                <label for="ws-path-input">WebSocket Path:</label>
+                <input type="text" id="ws-path-input" class="auto-save" 
+                       value="/ws" placeholder="e.g., /ws">
+            </div>
+
+            <button id="generate-config" class="btn btn-primary btn-block" 
+                    data-original-text="🚀 Generate Configuration">
+                🚀 Generate Configuration
+            </button>
+
+            <button id="regenerate-uuid" class="btn btn-danger btn-block" 
+                    style="margin-top: 10px;" 
+                    data-original-text="🔄 Regenerate UUID">
+                🔄 Regenerate UUID
+            </button>
+        </div>
+
+        <!-- Configuration Display -->
+        <div id="config-display" class="config-display" style="display: none;">
+            <button id="copy-config" class="copy-btn">📋 Copy</button>
+            <pre id="config-text"></pre>
+        </div>
+
+        <!-- QR Code Section -->
+        <div class="qr-section">
+            <h3>📱 Scan QR Code</h3>
+            <div id="qrcode"></div>
+        </div>
+
+        <!-- JSON Config Display -->
+        <div style="margin-top: 20px;">
+            <h3>📄 Raw Configuration</h3>
+            <pre id="json-config" class="config-display" style="max-height: 200px; overflow-y: auto;"></pre>
+        </div>
+
+        <!-- Log Section -->
+        <div style="margin-top: 20px;">
+            <h3>📋 Live Logs</h3>
+            <div id="log-display" class="log-section">
+                Loading logs...
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/script.js"></script>
+</body>
+</html>
