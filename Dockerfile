@@ -1,4 +1,4 @@
-FROM python:3.11-slim AS builder
+FROM python:3.11-slim
 
 # نصب پیش‌نیازها
 RUN apt-get update && apt-get install -y \
@@ -15,6 +15,15 @@ RUN mkdir -p /opt/xray && \
     chmod +x /opt/xray/xray && \
     rm /tmp/xray.zip
 
+# ساخت تمام دایرکتوری‌های مورد نیاز
+RUN mkdir -p /var/log/xray \
+    /var/log/nginx \
+    /var/log/panel \
+    /var/log/supervisor \
+    /app/data \
+    /app/configs \
+    /etc/xray
+
 # تنظیم پایتون
 WORKDIR /app
 COPY requirements.txt .
@@ -27,5 +36,4 @@ COPY . .
 EXPOSE 8000 12889 8443
 
 # استارت با Supervisor
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/supervisord.conf"]
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
