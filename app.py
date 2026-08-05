@@ -687,7 +687,6 @@ def check_xray_status() -> bool:
         result = subprocess.run(["pgrep", "-f", "xray"], capture_output=True, text=True)
         return result.returncode == 0
     except:
-        # If pgrep fails, assume running since we started it
         return True
 
 def get_active_connections() -> int:
@@ -752,7 +751,7 @@ async def api_generate_config(
     host: str = "speed.cloudflare.com",
     ws_path: str = "/ws"
 ):
-    """Generate VLESS configuration"""
+    """Generate VLESS configuration with fingerprint chrome and no ALPN"""
     
     # Get settings
     uuid = get_uuid()
@@ -765,20 +764,24 @@ async def api_generate_config(
     if not ws_path.startswith('/'):
         ws_path = '/' + ws_path
     
-    # Build VLESS link
+    # ============================================
+    # Build VLESS link (fingerprint chrome, no ALPN)
+    # ============================================
     vless_link = (
         f"vless://{uuid}@{host}:443"
         f"?encryption=none"
         f"&security=tls"
         f"&sni={sni}"
-        f"&alpn=h2,http/1.1"
+        f"&fp=chrome"
         f"&type=ws"
         f"&host={railway_domain}"
         f"&path={ws_path}"
         f"#EdgeX-{railway_domain.split('.')[0]}"
     )
     
-    # Build JSON config
+    # ============================================
+    # Build JSON config (fingerprint chrome, no ALPN)
+    # ============================================
     config_data = {
         "outbounds": [{
             "protocol": "vless",
@@ -799,7 +802,8 @@ async def api_generate_config(
                 "tlsSettings": {
                     "serverName": sni,
                     "allowInsecure": False,
-                    "alpn": ["h2", "http/1.1"]
+                    "fingerprint": "chrome",
+                    "alpn": []
                 },
                 "wsSettings": {
                     "path": ws_path,
